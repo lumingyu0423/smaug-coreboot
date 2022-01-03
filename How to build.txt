@@ -1,0 +1,13 @@
+Clone:
+git clone --recurse-submodules https://github.com/lumingyu0423/smaug-coreboot.git
+git submodule update --init --checkout
+cd coreboot
+
+Build Cross Compiler:
+make crossgcc-arm CPUS=8
+make crossgcc-aarch64 CPUS=8
+
+Build :
+copy tegra_mtc.bin to dir
+make google_smaug_defconfig
+make -j8
