@@ -77,6 +77,37 @@ struct pad_config {
 		.unused = 1,				\
 		.pad_has_gpio = PAD_HAS_GPIO_##ball_,	\
 	}
+
+#define PAD_CFG_UNUSED_WITH_RES(ball_, res_)			\
+	{							\
+		.pinmux_flags = PINMUX_##ball_##_FUNC_##res_,	\
+		.gpio_index = PAD_TO_GPIO_##ball_,		\
+		.pinmux_index = PINMUX_##ball_##_INDEX,	\
+		.unused = 1,					\
+		.pad_has_gpio = PAD_HAS_GPIO_##ball_,		\
+	}
+
+/* CFGPADCTRL regs for audio, camera and touch */
+enum {
+	AUD_MCLK = 0xF4,
+	CAM1_MCLK = 0x118,
+	CAM2_MCLK = 0x124,
+	CAM_AF_EN = 0x12C,
+	CAM_FLASH_EN = 0x130,
+	GPIO_PZ0 = 0x1FC,
+	GPIO_PZ1 = 0x200,
+	TOUCH_CLK = 0x310,
+	QSPI_COMP_CONTROL = 0x370
+};
+
+#define TEGRA_APB_MISC_GP_REGS(x)	((unsigned char *)TEGRA_APB_MISC_GP_BASE + (x))
+
+/* SDMMC1/3 pads & bits */
+#define VENDOR_IO_TRIM_CNTRL	0x1AC
+#define SEL_VREG		(1 << 2)
+#define SDMEMCOMPPADCTRL	0x1E0
+#define PAD_E_INPUT		(1 << 31)
+
 /*
  * Configure the pads associated with entry according to the configuration.
  */
