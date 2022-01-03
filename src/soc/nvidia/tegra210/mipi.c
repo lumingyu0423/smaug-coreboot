@@ -92,7 +92,7 @@ static int tegra_mipi_wait(struct tegra_mipi *mipi)
 {
 	u32 poll_interval_us = 1000;
 	u32 timeout_us = 250 * 1000;
-	unsigned long value;
+	u32 value;
 
 	do {
 		value = tegra_mipi_readl(mipi, MIPI_CAL_STATUS);

@@ -12,9 +12,16 @@
 ## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ## GNU General Public License for more details.
 ##
+## You should have received a copy of the GNU General Public License
+## along with this program; if not, write to the Free Software
+## Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+##
 
 chip soc/nvidia/tegra210
+	register  "spintable_addr" = "0x80000008"
+
 	device cpu_cluster 0 on
+		device cpu 0 on end
 	end
 
 	register "display_controller" = "TEGRA_ARM_DISPLAYA"
@@ -26,8 +33,8 @@ chip soc/nvidia/tegra210
 	register "color_depth" = "12"
 
 	# framebuffer resolution
-	register "display_xres" = "1280"
-	register "display_yres" = "800"
+	register "display_xres" = "2560"
+	register "display_yres" = "1800"
 
 	register "href_to_sync" = "1"
 	register "hfront_porch" = "80"

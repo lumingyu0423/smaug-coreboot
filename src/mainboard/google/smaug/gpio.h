@@ -11,6 +11,10 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 #ifndef __MAINBOARD_GOOGLE_SMAUG_GPIO_H__
@@ -31,12 +35,11 @@ enum {
 	BOARD_REV7 = BASE3(Z, 1),
 	BOARD_REV8 = BASE3(Z, Z),
 
-	BOARD_ID_PROTO_0	= BOARD_REV0,
-	BOARD_ID_PROTO_1	= BOARD_REV1,
-	BOARD_ID_EVT		= BOARD_REV2,
-	BOARD_ID_DVT		= BOARD_REV3,
-	BOARD_ID_PVT		= BOARD_REV4,
-	BOARD_ID_MP		= BOARD_REV5,
+	BOARD_ID_EVT2		= BOARD_REV2,
+	BOARD_ID_PROTO7	= BOARD_REV3,
+	BOARD_ID_DVT		= BOARD_REV4,
+	BOARD_ID_PVT		= BOARD_REV5,
+	BOARD_ID_MP		= BOARD_REV6,
 };
 
 enum {

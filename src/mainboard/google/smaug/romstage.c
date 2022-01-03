@@ -1,6 +1,7 @@
 /*
  * This file is part of the coreboot project.
  *
+ * Copyright 2018 Andre Heider <a.heider@gmail.com>
  * Copyright 2015 Google Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,21 +14,23 @@
  * GNU General Public License for more details.
  */
 
+#include <console/console.h>
 #include <delay.h>
+#include <device/i2c.h>
 #include <soc/addressmap.h>
-#include <device/i2c_simple.h>
 #include <soc/clock.h>
 #include <soc/funitcfg.h>
 #include <soc/nvidia/tegra/i2c.h>
 #include <soc/padconfig.h>
 #include <soc/romstage.h>
 
+#include "cbfs.h"
 #include "gpio.h"
 #include "pmic.h"
 
 static const struct pad_config padcfgs[] = {
 	/* AP_SYS_RESET_L - active low*/
-	PAD_CFG_GPIO_OUT1(SDMMC1_DAT0, PINMUX_PULL_UP),
+	PAD_CFG_GPIO_OUT1(SDMMC1_DAT0, PINMUX_PULL_NONE),
 	/* WP_L - active low */
 	PAD_CFG_GPIO_INPUT(GPIO_PK2, PINMUX_PULL_NONE),
 	/* BTN_AP_PWR_L - active low */
@@ -35,12 +38,16 @@ static const struct pad_config padcfgs[] = {
 	/* BTN_AP_VOLD_L - active low */
 	PAD_CFG_GPIO_INPUT(BUTTON_VOL_DOWN, PINMUX_PULL_UP),
 	/* BTN_AP_VOLU_L - active low */
-	PAD_CFG_GPIO_INPUT(SDMMC1_DAT1, PINMUX_PULL_UP),
+	PAD_CFG_GPIO_INPUT(SDMMC1_DAT1, PINMUX_PULL_NONE),
 };
 
 void romstage_mainboard_init(void)
 {
 	soc_configure_pads(padcfgs, ARRAY_SIZE(padcfgs));
+
+	printk(BIOS_INFO, "Switching to SDRAM backed CBFS\n");
+
+	cbfs_switch_to_sdram();
 }
 
 void mainboard_configure_pmc(void)

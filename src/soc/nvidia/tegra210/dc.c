@@ -119,6 +119,7 @@ int update_display_mode(struct display_controller *disp_ctrl,
 	 *   default: Set both shift_clk_div and pixel_clock_div to 1
 	 */
 	update_display_shift_clock_divider(disp_ctrl, SHIFT_CLK_DIVIDER(1));
+	printk(BIOS_DEBUG, "update display shift clock divider success.\n");
 
 	return 0;
 }

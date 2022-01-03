@@ -1,6 +1,7 @@
 ##
 ## This file is part of the coreboot project.
 ##
+## Copyright 2018 Andre Heider <a.heider@gmail.com>
 ## Copyright 2015 Google Inc.
 ##
 ## This program is free software; you can redistribute it and/or modify
@@ -21,27 +22,28 @@ $(obj)/generated/bct.cfg:
 	@printf "    CAT        $(subst $(obj)/,,$(@))\n"
 	cat $^ > $@
 
+CFLAGS_common += -Wno-unused-function
+
 subdirs-y += bct
 
 bootblock-y += bootblock.c
 bootblock-y += pmic.c
 bootblock-y += reset.c
+bootblock-y += cbfs_usb.c
 
-verstage-y += chromeos.c
 verstage-y += reset.c
 
-romstage-y += chromeos.c
 romstage-y += pmic.c
 romstage-y += reset.c
 romstage-y += romstage.c
 romstage-y += sdram_configs.c
+romstage-y += cbfs_usb.c
 
-ramstage-y += chromeos.c
-ramstage-y += boardid.c
 ramstage-y += mainboard.c
 ramstage-y += reset.c
 ramstage-y += pmic.c
 ramstage-y += sdram_configs.c
+ramstage-y += cbfs_usb.c
 
 bootblock-y += memlayout.ld
 romstage-y += memlayout.ld

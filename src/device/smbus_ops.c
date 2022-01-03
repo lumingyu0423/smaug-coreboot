@@ -13,21 +13,32 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include <stdint.h>
 #include <console/console.h>
+#include <stdint.h>
 #include <device/device.h>
+#include <device/path.h>
 #include <device/smbus.h>
 
 struct bus *get_pbus_smbus(device_t dev)
 {
-	struct bus *const pbus = i2c_link(dev);
-	if (!pbus->dev->ops->ops_smbus_bus) {
+	struct bus *pbus = dev->bus;
+
+	while (pbus && pbus->dev && !ops_smbus_bus(pbus))
+		pbus = pbus->dev->bus;
+
+	if (!pbus || !pbus->dev || !pbus->dev->ops
+	    || !pbus->dev->ops->ops_smbus_bus) {
 		printk(BIOS_ALERT, "%s Cannot find SMBus bus operations",
 		       dev_path(dev));
 		die("");
 	}
+
 	return pbus;
 }
 
@@ -68,25 +79,59 @@ int smbus_set_link(device_t dev)
 	return pbus_num;
 }
 
-#define CHECK_PRESENCE(x)				       \
-	if (!ops_smbus_bus(get_pbus_smbus(dev))->x) {	       \
-		printk(BIOS_ERR, "%s missing " #x "\n",	       \
-		       dev_path(dev));			       \
-		return -1;				       \
-	}
+int smbus_quick_read(device_t dev)
+{
+	return ops_smbus_bus(get_pbus_smbus(dev))->quick_read(dev);
+}
+
+int smbus_quick_write(device_t dev)
+{
+	return ops_smbus_bus(get_pbus_smbus(dev))->quick_write(dev);
+}
+
+int smbus_recv_byte(device_t dev)
+{
+	return ops_smbus_bus(get_pbus_smbus(dev))->recv_byte(dev);
+}
+
+int smbus_send_byte(device_t dev, u8 byte)
+{
+	return ops_smbus_bus(get_pbus_smbus(dev))->send_byte(dev, byte);
+}
+
+int smbus_read_byte(device_t dev, u8 addr)
+{
+	return ops_smbus_bus(get_pbus_smbus(dev))->read_byte(dev, addr);
+}
+
+int smbus_write_byte(device_t dev, u8 addr, u8 val)
+{
+	return ops_smbus_bus(get_pbus_smbus(dev))->write_byte(dev, addr, val);
+}
+
+int smbus_read_word(device_t dev, u8 addr)
+{
+	return ops_smbus_bus(get_pbus_smbus(dev))->read_word(dev, addr);
+}
+
+int smbus_write_word(device_t dev, u8 addr, u16 val)
+{
+	return ops_smbus_bus(get_pbus_smbus(dev))->write_word(dev, addr, val);
+}
+
+int smbus_process_call(device_t dev, u8 cmd, u16 data)
+{
+	return ops_smbus_bus(get_pbus_smbus(dev))->process_call(dev, cmd, data);
+}
 
 int smbus_block_read(device_t dev, u8 cmd, u8 bytes, u8 *buffer)
 {
-	CHECK_PRESENCE(block_read);
-
 	return ops_smbus_bus(get_pbus_smbus(dev))->block_read(dev, cmd,
 							      bytes, buffer);
 }
 
 int smbus_block_write(device_t dev, u8 cmd, u8 bytes, const u8 *buffer)
 {
-	CHECK_PRESENCE(block_write);
-
 	return ops_smbus_bus(get_pbus_smbus(dev))->block_write(dev, cmd,
 							       bytes, buffer);
 }

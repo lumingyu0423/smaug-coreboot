@@ -17,53 +17,115 @@
 #define _DEVICE_I2C_H_
 
 #include <stdint.h>
+#include <stdlib.h>
+
+struct i2c_seg
+{
+	int read;
+	uint8_t chip;
+	uint8_t *buf;
+	int len;
+};
+
+int platform_i2c_transfer(unsigned bus, struct i2c_seg *segments, int count);
+
+#define SOFTWARE_I2C_MAX_BUS 10		/* increase as necessary */
+
+struct software_i2c_ops {
+	void (*set_sda)(unsigned bus, int high);
+	void (*set_scl)(unsigned bus, int high);
+	int (*get_sda)(unsigned bus);
+	int (*get_scl)(unsigned bus);
+};
+
+extern struct software_i2c_ops *software_i2c[];
+
+int software_i2c_transfer(unsigned bus, struct i2c_seg *segments, int count);
+void software_i2c_wedge_ack(unsigned bus, u8 chip);
+void software_i2c_wedge_read(unsigned bus, u8 chip, u8 reg, int bit_count);
+void software_i2c_wedge_write(unsigned bus, u8 chip, u8 reg, int bit_count);
+
+/*
+ * software_i2c is supposed to be a debug feature. It's usually not compiled in,
+ * but when it is it can be dynamically enabled at runtime for certain busses.
+ * Need this ugly stub to arbitrate since I2C device drivers hardcode
+ * 'i2c_transfer()' as their entry point.
+ */
+static inline int i2c_transfer(unsigned bus, struct i2c_seg *segments,
+			       int count)
+{
+	if (CONFIG_SOFTWARE_I2C)
+		if (bus < SOFTWARE_I2C_MAX_BUS && software_i2c[bus])
+			return software_i2c_transfer(bus, segments, count);
+
+	return platform_i2c_transfer(bus, segments, count);
+}
+
+/*
+ * Read a raw chunk of data in one segment and one frame.
+ *
+ * [start][slave addr][r][data][stop]
+ */
+static inline int i2c_read_raw(unsigned bus, uint8_t chip, uint8_t *data,
+			       int len)
+{
+	struct i2c_seg seg =
+		{ .read = 1, .chip = chip, .buf = data, .len = len };
+	return i2c_transfer(bus, &seg, 1);
+}
+
+/*
+ * Write a raw chunk of data in one segment and one frame.
+ *
+ * [start][slave addr][w][data][stop]
+ */
+static inline int i2c_write_raw(unsigned bus, uint8_t chip, uint8_t *data,
+			        int len)
+{
+	struct i2c_seg seg =
+		{ .read = 0, .chip = chip, .buf = data, .len = len };
+	return i2c_transfer(bus, &seg, 1);
+}
 
 /**
- * struct i2c_msg - an I2C transaction segment beginning with START
- * @addr: Slave address, either seven or ten bits.  When this is a ten
- *	bit address, I2C_M_TEN must be set in @flags.
- * @flags: I2C_M_RD is handled by all adapters.
- * @len: Number of data bytes in @buf being read from or written to the
- *	I2C slave address.  For read transactions where I2C_M_RECV_LEN
- *	is set, the caller guarantees that this buffer can hold up to
- *	32 bytes in addition to the initial length byte sent by the
- *	slave (plus, if used, the SMBus PEC).
- * @buf: The buffer into which data is read, or from which it's written.
+ * Read a byte with two segments in one frame
  *
- * An i2c_msg is the low level representation of one segment of an I2C
- * transaction.  It is visible to drivers in the @i2c_transfer() procedure.
- *
- * All I2C adapters implement the standard rules for I2C transactions. Each
- * transaction begins with a START.  That is followed by the slave address,
- * and a bit encoding read versus write.  Then follow all the data bytes,
- * possibly including a byte with SMBus PEC.  The transfer terminates with
- * a NAK, or when all those bytes have been transferred and ACKed.  If this
- * is the last message in a group, it is followed by a STOP.  Otherwise it
- * is followed by the next @i2c_msg transaction segment, beginning with a
- * (repeated) START.
+ * [start][slave addr][w][register addr][start][slave addr][r][data][stop]
  */
-struct i2c_msg {
-	uint16_t flags;
-#define I2C_M_RD		0x0001	/* read data, from slave to master */
-#define I2C_M_TEN		0x0010	/* this is a ten bit chip address */
-#define I2C_M_RECV_LEN		0x0400	/* length will be first received byte */
-#define I2C_M_NOSTART		0x4000	/* don't send a repeated START */
-	uint16_t slave;		/* slave address			*/
-	uint16_t len;		/* msg length				*/
-	uint8_t *buf;		/* pointer to msg data			*/
-};
+static inline int i2c_readb(unsigned bus, uint8_t chip, uint8_t reg,
+			    uint8_t *data)
+{
+	struct i2c_seg seg[2];
 
-enum i2c_speed {
-	I2C_SPEED_STANDARD	= 100000,
-	I2C_SPEED_FAST		= 400000,
-	I2C_SPEED_FAST_PLUS	= 1000000,
-	I2C_SPEED_HIGH		= 3400000,
-	I2C_SPEED_FAST_ULTRA	= 5000000,
-};
+	seg[0].read = 0;
+	seg[0].chip = chip;
+	seg[0].buf = &reg;
+	seg[0].len = 1;
+	seg[1].read = 1;
+	seg[1].chip = chip;
+	seg[1].buf = data;
+	seg[1].len = 1;
 
-enum i2c_address_mode {
-	I2C_MODE_7_BIT,
-	I2C_MODE_10_BIT
-};
+	return i2c_transfer(bus, seg, ARRAY_SIZE(seg));
+}
+
+/**
+ * Write a byte with one segment in one frame.
+ *
+ * [start][slave addr][w][register addr][data][stop]
+ */
+static inline int i2c_writeb(unsigned bus, uint8_t chip, uint8_t reg,
+			     uint8_t data)
+{
+	struct i2c_seg seg;
+	uint8_t buf[] = {reg, data};
+
+	seg.read = 0;
+	seg.chip = chip;
+	seg.buf = buf;
+	seg.len = ARRAY_SIZE(buf);
+
+	return i2c_transfer(bus, &seg, 1);
+}
 
 #endif	/* _DEVICE_I2C_H_ */

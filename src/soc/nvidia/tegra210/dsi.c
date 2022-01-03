@@ -537,8 +537,9 @@ static int tegra_output_dsi_setup_clock(struct tegra_dsi *dsi,
 
 static int tegra_dsi_pad_enable(struct tegra_dsi *dsi)
 {
-	unsigned long value;
+	u32 value;
 
+	printk(BIOS_INFO, "tegra DSI_PAD_CONTROL_0 enable.\n");
 	value = DSI_PAD_CONTROL_VS1_PULLDN(0) | DSI_PAD_CONTROL_VS1_PDIO(0);
 	tegra_dsi_writel(dsi, value, DSI_PAD_CONTROL_0);
 	return 0;
@@ -555,15 +556,18 @@ static int tegra_dsi_pad_calibrate(struct tegra_dsi *dsi)
 	tegra_dsi_writel(dsi, 0, DSI_PAD_CONTROL_4);
 
 	/* start calibration */
+	printk(BIOS_INFO, "Start calibration.\n");
 	tegra_dsi_pad_enable(dsi);
 
 	value = DSI_PAD_SLEW_UP(0x7) | DSI_PAD_SLEW_DN(0x7) |
 		DSI_PAD_LP_UP(0x1) | DSI_PAD_LP_DN(0x1) |
 		DSI_PAD_OUT_CLK(0x0);
+	printk(BIOS_INFO, "tegra DSI_PAD_CONTROL_2 enable.\n");
 	tegra_dsi_writel(dsi, value, DSI_PAD_CONTROL_2);
 
 	value = DSI_PAD_PREEMP_PD_CLK(0x3) | DSI_PAD_PREEMP_PU_CLK(0x3) |
 		DSI_PAD_PREEMP_PD(0x03) | DSI_PAD_PREEMP_PU(0x3);
+	printk(BIOS_INFO, "tegra DSI_PAD_CONTROL_3 enable.\n");
 	tegra_dsi_writel(dsi, value, DSI_PAD_CONTROL_3);
 
 	return tegra_mipi_calibrate(dsi->mipi);
@@ -891,15 +895,18 @@ static int dsi_probe_if(int dsi_index,
         dsi->lanes = 4;
 
 	/* get tegra_mipi_device */
+		printk(BIOS_INFO, "Get tegra_mipi_device.\n");
         dsi->mipi = tegra_mipi_request(&mipi_device_data[dsi_index], dsi_index);
 
 	/* calibrate */
+	printk(BIOS_INFO, "MIPI calibration.\n");
 	err = tegra_dsi_pad_calibrate(dsi);
 	if (err < 0) {
 		printk(BIOS_ERR, "MIPI calibration failed: %d\n", err);
 		return err;
 	}
 
+	printk(BIOS_INFO, "Register DSI host.\n");
 	dsi->host.ops = &tegra_dsi_host_ops;
 	err = mipi_dsi_host_register(&dsi->host);
 	if (err < 0) {
@@ -908,6 +915,7 @@ static int dsi_probe_if(int dsi_index,
 	}
 
 	/* get panel */
+	printk(BIOS_INFO, "Get panel.\n");
 	dsi->panel = panel_jdi_dsi_probe((struct mipi_dsi_device *)dsi->host.dev);
 	if (IS_ERR_PTR(dsi->panel)) {
 		printk(BIOS_ERR, "failed to get dsi panel\n");
@@ -936,23 +944,30 @@ static void tegra_dsi_init_regs(struct tegra_dsi *dsi)
 
 static int dsi_enable(struct soc_nvidia_tegra210_config *config)
 {
+	printk(BIOS_INFO, "Start dsi enable.\n");
 	struct tegra_dsi *dsi_a = &dsi_data[DSI_A];
 
+	printk(BIOS_INFO, "Dsi probe.\n");
 	dsi_probe(config);
 
 	/* set up clock and TimeOutRegisters */
+	printk(BIOS_INFO, "Set up clock and TimeOutRegisters.\n");
 	tegra_output_dsi_setup_clock(dsi_a, config);
 
 	/* configure APB_MISC_GP_MIPI_PAD_CTRL_0 */
+	printk(BIOS_INFO, "Configure APB_MISC_GP_MIPI_PAD_CTRL_0.\n");
 	write32((unsigned int *)APB_MISC_GP_MIPI_PAD_CTRL_0, DSIB_MODE_DSI);
 
 	/* configure phy interface timing registers */
+	printk(BIOS_INFO, "Configure phy interface timing registers.\n");
 	tegra_dsi_set_phy_timing(dsi_a);
 
 	/* Initialize DSI registers */
+	printk(BIOS_INFO, "Initialize DSI registers.\n");
 	tegra_dsi_init_regs(dsi_a);
 
 	/* prepare panel */
+	printk(BIOS_INFO, "Prepare panel.\n");
 	panel_jdi_prepare(dsi_a->panel);
 
 	/* enable dsi */
