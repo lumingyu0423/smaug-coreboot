@@ -899,12 +899,12 @@ static int dsi_probe_if(int dsi_index,
         dsi->mipi = tegra_mipi_request(&mipi_device_data[dsi_index], dsi_index);
 
 	/* calibrate */
-	printk(BIOS_INFO, "MIPI calibration.\n");
+	/* printk(BIOS_INFO, "MIPI calibration.\n");
 	err = tegra_dsi_pad_calibrate(dsi);
 	if (err < 0) {
 		printk(BIOS_ERR, "MIPI calibration failed: %d\n", err);
 		return err;
-	}
+	} */
 
 	printk(BIOS_INFO, "Register DSI host.\n");
 	dsi->host.ops = &tegra_dsi_host_ops;
